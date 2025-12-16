@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quant Terminal • Strategy Advisor</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1620;
+      --panel2:#0c121b;
+      --border:#1b2a3a;
+      --text:#d6e2f0;
+      --muted:#8aa2bd;
+      --good:#2ee59d;
+      --warn:#ffd166;
+      --bad:#ff5c7a;
+      --accent:#6aa8ff;
+      --accent2:#9b7bff;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,Segoe UI Emoji;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 20% -10%, rgba(106,168,255,.08), transparent 55%),
+                  radial-gradient(900px 600px at 120% 10%, rgba(155,123,255,.08), transparent 55%),
+                  linear-gradient(180deg, #070a0f, var(--bg));
+      color:var(--text);
+      font-family:var(--sans);
+    }
+
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: rgba(11,15,20,.82);
+      border-bottom:1px solid rgba(27,42,58,.8);
+    }
+
+    .wrap{max-width:1180px;margin:0 auto;padding:14px 18px;}
+
+    .brand{
+      display:flex;align-items:center;gap:12px;
+    }
+    .logo{
+      width:34px;height:34px;border-radius:10px;
+      background: linear-gradient(135deg, rgba(106,168,255,.25), rgba(155,123,255,.25));
+      border:1px solid rgba(106,168,255,.25);
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .logo:before{
+      content:""; position:absolute; inset:-40% -40%;
+      background: conic-gradient(from 180deg, rgba(106,168,255,.35), rgba(155,123,255,.25), rgba(46,229,157,.20), rgba(106,168,255,.35));
+      animation: spin 6s linear infinite;
+      filter: blur(8px);
+      opacity:.65;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .title{
+      display:flex;flex-direction:column;line-height:1.05;
+    }
+    .title strong{font-family:var(--mono); font-size:14px; letter-spacing:.8px;}
+    .title span{font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.6px;}
+
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between;}
+
+    .controls{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end;
+    }
+
+    .input{
+      display:flex; align-items:center; gap:8px;
+      background: rgba(15,22,32,.7);
+      border:1px solid rgba(27,42,58,.9);
+      border-radius:12px;
+      padding:10px 12px;
+      box-shadow: 0 8px 18px rgba(0,0,0,.25);
+    }
+    label{font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.6px;}
+    input, select{
+      background: transparent;
+      border:none;
+      color: var(--text);
+      font-family:var(--mono);
+      outline:none;
+      font-size:13px;
+      min-width:120px;
+    }
+    input::placeholder{color:rgba(138,162,189,.65)}
+
+    .btn{
+      appearance:none;
+      border:1px solid rgba(106,168,255,.35);
+      background: linear-gradient(135deg, rgba(106,168,255,.16), rgba(155,123,255,.10));
+      color:var(--text);
+      font-family:var(--mono);
+      font-size:12px;
+      letter-spacing:.6px;
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      box-shadow: 0 10px 22px rgba(0,0,0,.25);
+      transition: transform .08s ease, border-color .2s ease, background .2s ease;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(106,168,255,.6)}
+    .btn:active{transform: translateY(0px)}
+    .btn.secondary{border-color: rgba(27,42,58,.95); background: rgba(15,22,32,.7)}
+
+    .grid{
+      max-width:1180px;
+      margin:0 auto;
+      padding:18px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+    }
+
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(15,22,32,.82), rgba(12,18,27,.82));
+      border:1px solid rgba(27,42,58,.9);
+      border-radius:18px;
+      padding:14px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2{
+      margin:0 0 10px 0;
+      font-family:var(--mono);
+      font-size:12px;
+      letter-spacing:.8px;
+      color:var(--muted);
+      text-transform:uppercase;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .badge{
+      font-family:var(--mono);
+      font-size:11px;
+      letter-spacing:.6px;
+      padding:6px 9px;
+      border-radius:999px;
+      border:1px solid rgba(27,42,58,.9);
+      background: rgba(11,15,20,.55);
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+    @media (max-width: 980px){
+      .kpis{grid-template-columns: repeat(2, 1fr)}
+    }
+    .kpi{
+      background: rgba(11,15,20,.55);
+      border:1px solid rgba(27,42,58,.8);
+      border-radius:14px;
+      padding:10px;
+    }
+    .kpi .label{font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:.8px; text-transform:uppercase}
+    .kpi .value{font-family:var(--mono); font-size:16px; margin-top:6px}
+    .kpi .sub{font-family:var(--mono); font-size:10px; color:rgba(138,162,189,.75); margin-top:4px}
+
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (max-width: 980px){
+      .two{grid-template-columns:1fr}
+    }
+
+    canvas{width:100%; height:310px; display:block;}
+
+    .table{
+      width:100%; border-collapse:separate; border-spacing:0;
+      overflow:hidden;
+      border-radius:14px;
+      border:1px solid rgba(27,42,58,.8);
+      background: rgba(11,15,20,.55);
+      font-family:var(--mono);
+      font-size:12px;
+    }
+    .table th, .table td{padding:10px 10px; border-bottom:1px solid rgba(27,42,58,.55);}
+    .table th{color:var(--muted); font-size:11px; letter-spacing:.7px; text-transform:uppercase; text-align:left;}
+    .table tr:last-child td{border-bottom:none}
+
+    .pill{padding:2px 8px; border-radius:999px; font-size:11px; border:1px solid rgba(27,42,58,.9)}
+    .good{color:var(--good); border-color: rgba(46,229,157,.35); background: rgba(46,229,157,.08)}
+    .bad{color:var(--bad); border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.08)}
+    .warn{color:var(--warn); border-color: rgba(255,209,102,.35); background: rgba(255,209,102,.08)}
+
+    .mono{font-family:var(--mono)}
+
+    .callout{
+      border-radius:16px;
+      border:1px solid rgba(106,168,255,.25);
+      background: linear-gradient(135deg, rgba(106,168,255,.10), rgba(155,123,255,.06));
+      padding:12px;
+    }
+
+    .callout .big{
+      font-family:var(--mono);
+      font-size:16px;
+      letter-spacing:.4px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .callout .desc{margin-top:8px; color:rgba(214,226,240,.85); font-size:13px; line-height:1.35}
+
+    .muted{color:var(--muted)}
+    .footer{
+      max-width:1180px;
+      margin:0 auto;
+      padding:10px 18px 22px;
+      color:rgba(138,162,189,.7);
+      font-family:var(--mono);
+      font-size:11px;
+      letter-spacing:.35px;
+    }
+
+    .toast{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      max-width:520px;
+      background: rgba(11,15,20,.92);
+      border:1px solid rgba(27,42,58,.95);
+      padding:12px 12px;
+      border-radius:16px;
+      box-shadow: var(--shadow);
+      display:none;
+      z-index:50;
+    }
+    .toast strong{font-family:var(--mono); font-size:12px; letter-spacing:.5px}
+    .toast p{margin:8px 0 0 0; font-size:12px; color:rgba(214,226,240,.85); line-height:1.35}
+
+    .spinner{
+      width:14px;height:14px;
+      border:2px solid rgba(138,162,189,.35);
+      border-top-color: rgba(106,168,255,.8);
+      border-radius:50%;
+      display:inline-block;
+      animation: spin2 .8s linear infinite;
+    }
+    @keyframes spin2{to{transform:rotate(360deg)}}
+
+    .tiny{font-size:11px}
+    .hr{height:1px; background: rgba(27,42,58,.65); margin:12px 0}
+
+    .note{
+      font-size:12px;
+      line-height:1.35;
+      color: rgba(214,226,240,.82);
+    }
+    .note code{font-family:var(--mono); font-size:11px; color:rgba(214,226,240,.92)}
+
+    .hidden{display:none !important}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="wrap">
+      <div class="row">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div class="title">
+            <strong>QUANT TERMINAL • STRATEGY ADVISOR</strong>
+            <span>OHLC → Indicators → Regime → Strategy → Trade Tickets</span>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="input">
+            <label for="ticker">TICKER</label>
+            <input id="ticker" placeholder="BRK-B, AAPL, SPY" value="BRK-B" />
+          </div>
+          <div class="input">
+            <label for="provider">DATA</label>
+            <select id="provider">
+              <option value="stooq">Stooq (free, EOD)</option>
+              <option value="alpaca">Alpaca (key)</option>
+              <option value="polygon">Polygon (key)</option>
+            </select>
+          </div>
+          <div class="input" id="apiKeyWrap">
+            <label for="apiKey">API KEY</label>
+            <input id="apiKey" placeholder="optional (Alpaca/Polygon)" />
+          </div>
+          <button class="btn" id="runBtn"><span id="runIcon">▶</span> RUN</button>
+          <button class="btn secondary" id="demoBtn" title="Loads local pasted CSV (no simulated data)">PASTE CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="grid">
+    <section class="panel">
+      <h2>
+        Market Snapshot
+        <span class="badge" id="asOf">AS OF —</span>
+      </h2>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="label">Last</div>
+          <div class="value" id="k_last">—</div>
+          <div class="sub" id="k_chg">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">SMA20 / SMA50</div>
+          <div class="value" id="k_sma">—</div>
+          <div class="sub" id="k_smaNote">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">SMA200</div>
+          <div class="value" id="k_sma200">—</div>
+          <div class="sub" id="k_trend">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">ATR14 / Vol20</div>
+          <div class="value" id="k_vol">—</div>
+          <div class="sub" id="k_rsi">—</div>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="panel" style="padding:12px; border-radius:16px;">
+          <h2 style="margin-bottom:8px">Price (90d)</h2>
+          <canvas id="priceChart" width="800" height="360"></canvas>
+        </div>
+        <div class="panel" style="padding:12px; border-radius:16px;">
+          <h2 style="margin-bottom:8px">Diagnostics</h2>
+          <table class="table" aria-label="Diagnostics">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Signal</th>
+              </tr>
+            </thead>
+            <tbody id="diagBody">
+              <tr><td colspan="3" class="muted">Run an analysis to populate diagnostics.</td></tr>
+            </tbody>
+          </table>
+          <div class="hr"></div>
+          <div class="note">
+            <div class="muted tiny">NO SIMULATED DATA</div>
+            <div style="margin-top:6px">This app only uses: (a) fetched EOD OHLC from your selected provider, or (b) OHLC CSV you paste. If a provider is blocked/rate-limited, the app will show a hard error and will not fabricate outputs.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h2>
+        Strategy Output
+        <span class="badge" id="regimeBadge">REGIME —</span>
+      </h2>
+
+      <div class="callout" id="recommendation">
+        <div class="big">
+          <span class="mono" id="recTitle">—</span>
+          <span class="pill warn" id="recPill">WAIT</span>
+        </div>
+        <div class="desc" id="recDesc">Run analysis to get a strategy recommendation and trade tickets.</div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>
+        Trade Tickets
+        <span class="badge" id="ticketCount">0</span>
+      </h2>
+      <div id="tickets"></div>
+
+      <div class="hr"></div>
+
+      <h2>
+        Strategy 1 Simulation
+        <span class="badge" id="simBadge">LAST 90D</span>
+      </h2>
+      <div class="note" id="simSummary">Simulation will appear after RUN.</div>
+      <div style="margin-top:10px; max-height:260px; overflow:auto; border-radius:14px; border:1px solid rgba(27,42,58,.8)">
+        <table class="table" style="border:none; border-radius:0;">
+          <thead>
+            <tr>
+              <th>Entry</th>
+              <th>Exit</th>
+              <th>Px In</th>
+              <th>Px Out</th>
+              <th>Rtn</th>
+              <th>Exit Reason</th>
+            </tr>
+          </thead>
+          <tbody id="simBody">
+            <tr><td colspan="6" class="muted">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="hr"></div>
+      <div class="note tiny muted">Disclaimer: Educational analysis only. Not investment advice. Market risk is real.</div>
+    </aside>
+  </main>
+
+  <div class="footer">
+    <div>Keys: <span class="muted">RSI14, SMA20/50/200, ATR14, vol20</span> • Execution: <span class="muted">next-day open (shifted signals)</span> • Stop: <span class="muted">2×ATR (Wilder)</span></div>
+  </div>
+
+  <div class="toast" id="toast">
+    <strong id="toastTitle">Error</strong>
+    <p id="toastMsg">—</p>
+  </div>
+
+  <!--
+    Static, no build step.
+    Data providers:
+      - Stooq: public CSV endpoint, EOD. (Works in many browsers; if blocked by CORS, user can use a proxy or paste CSV.)
+      - Alpaca / Polygon: requires API keys; CORS may require a server-side proxy.
+
+    CSV Paste format supported:
+      - Headers: Date, Open, High, Low, Close, Volume (case-insensitive)
+      - Or Stooq format: Date,Open,High,Low,Close,Volume
+  -->
+
+  <script>
+    /*********************
+     * Minimal charting
+     *********************/
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    let chartState = null;
+
+    function drawPriceChart(rows, sma20, sma50){
+      // Simple canvas plot (no external libs).
+      const W = ctx.canvas.width;
+      const H = ctx.canvas.height;
+      ctx.clearRect(0,0,W,H);
+
+      const padL=54, padR=14, padT=10, padB=24;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      const closes = rows.map(r=>r.close);
+      const highs = rows.map(r=>r.high);
+      const lows = rows.map(r=>r.low);
+      const maxY = Math.max(...highs);
+      const minY = Math.min(...lows);
+      const ySpan = (maxY - minY) || 1;
+
+      function x(i){ return padL + (i/(rows.length-1))*plotW; }
+      function y(v){ return padT + (1 - (v - minY)/ySpan)*plotH; }
+
+      // grid
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(27,42,58,.65)';
+      ctx.lineWidth = 1;
+      for(let g=0; g<=4; g++){
+        const yy = padT + (g/4)*plotH;
+        ctx.beginPath(); ctx.moveTo(padL,yy); ctx.lineTo(padL+plotW,yy); ctx.stroke();
+      }
+
+      // y-axis labels
+      ctx.fillStyle = 'rgba(138,162,189,.85)';
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+      for(let g=0; g<=4; g++){
+        const val = maxY - (g/4)*ySpan;
+        const yy = padT + (g/4)*plotH;
+        ctx.fillText(val.toFixed(2), 6, yy+4);
+      }
+
+      // close line
+      ctx.strokeStyle = 'rgba(214,226,240,.92)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      rows.forEach((r,i)=>{ const xx=x(i), yy=y(r.close); if(i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); });
+      ctx.stroke();
+
+      // SMA20
+      ctx.strokeStyle = 'rgba(106,168,255,.95)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      rows.forEach((r,i)=>{
+        const v = sma20[i];
+        if(v==null) return;
+        const xx=x(i), yy=y(v);
+        const started = ctx.__sma20Started;
+        if(!started){ ctx.moveTo(xx,yy); ctx.__sma20Started=true; }
+        else ctx.lineTo(xx,yy);
+      });
+      ctx.stroke();
+      ctx.__sma20Started=false;
+
+      // SMA50
+      ctx.strokeStyle = 'rgba(155,123,255,.95)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      rows.forEach((r,i)=>{
+        const v = sma50[i];
+        if(v==null) return;
+        const xx=x(i), yy=y(v);
+        const started = ctx.__sma50Started;
+        if(!started){ ctx.moveTo(xx,yy); ctx.__sma50Started=true; }
+        else ctx.lineTo(xx,yy);
+      });
+      ctx.stroke();
+      ctx.__sma50Started=false;
+
+      // Legend
+      ctx.fillStyle = 'rgba(138,162,189,.85)';
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+      ctx.fillText('Close', padL+6, padT+14);
+      ctx.fillStyle = 'rgba(106,168,255,.95)';
+      ctx.fillText('SMA20', padL+70, padT+14);
+      ctx.fillStyle = 'rgba(155,123,255,.95)';
+      ctx.fillText('SMA50', padL+144, padT+14);
+    }
+
+    /*********************
+     * Utilities
+     *********************/
+    const $ = (id)=>document.getElementById(id);
+
+    function toast(title, msg){
+      $('toastTitle').textContent = title;
+      $('toastMsg').textContent = msg;
+      $('toast').style.display = 'block';
+      clearTimeout(toast.__t);
+      toast.__t = setTimeout(()=> $('toast').style.display='none', 5200);
+    }
+
+    function fmt(n, d=2){
+      if(n==null || !Number.isFinite(n)) return '—';
+      return n.toLocaleString(undefined, {minimumFractionDigits:d, maximumFractionDigits:d});
+    }
+
+    function pct(n, d=2){
+      if(n==null || !Number.isFinite(n)) return '—';
+      return (n*100).toFixed(d)+'%';
+    }
+
+    function parseTickerForStooq(t){
+      // Stooq symbols: AAPL.US, BRK-B.US, SPY.US. Convert common input.
+      let s = (t||'').trim().toUpperCase();
+      if(!s) return null;
+      s = s.replace('.', '-');
+      if(!s.endsWith('.US')) s = s + '.US';
+      return s;
+    }
+
+    function parseCSV(text){
+      const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+      if(lines.length < 2) throw new Error('CSV appears empty.');
+      const header = lines[0].split(',').map(h=>h.trim().toLowerCase());
+      const idx = {
+        date: header.findIndex(h=>h==='date' || h==='datetime' || h==='time'),
+        open: header.findIndex(h=>h==='open'),
+        high: header.findIndex(h=>h==='high'),
+        low: header.findIndex(h=>h==='low'),
+        close: header.findIndex(h=>h==='close' || h==='adj close' || h==='adjclose'),
+        volume: header.findIndex(h=>h==='volume' || h==='vol'),
+      };
+      if(idx.date<0 || idx.open<0 || idx.high<0 || idx.low<0 || idx.close<0){
+        throw new Error('CSV must include headers: Date, Open, High, Low, Close (Volume optional).');
+      }
+      const rows = [];
+      for(let i=1;i<lines.length;i++){
+        const parts = lines[i].split(',');
+        if(parts.length < 5) continue;
+        const date = new Date(parts[idx.date]);
+        const open = Number(parts[idx.open]);
+        const high = Number(parts[idx.high]);
+        const low = Number(parts[idx.low]);
+        const close = Number(parts[idx.close]);
+        const volume = idx.volume>=0 ? Number(parts[idx.volume]) : null;
+        if(!Number.isFinite(open)||!Number.isFinite(high)||!Number.isFinite(low)||!Number.isFinite(close)) continue;
+        rows.push({date, open, high, low, close, volume});
+      }
+      rows.sort((a,b)=>a.date-b.date);
+      if(rows.length < 260) throw new Error('Need at least ~260 daily bars (1y) to compute SMA200 / drawdowns.');
+      return rows;
+    }
+
+    async function fetchStooqDaily(ticker){
+      const sym = parseTickerForStooq(ticker);
+      if(!sym) throw new Error('Ticker is required.');
+      const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(sym.toLowerCase())}&i=d`;
+      const res = await fetch(url, {mode:'cors'});
+      if(!res.ok) throw new Error(`Stooq fetch failed: ${res.status} ${res.statusText}`);
+      const text = await res.text();
+      return parseCSV(text);
+    }
+
+    /*********************
+     * Indicators
+     *********************/
+    function sma(vals, n){
+      const out = Array(vals.length).fill(null);
+      let sum = 0;
+      for(let i=0;i<vals.length;i++){
+        sum += vals[i];
+        if(i>=n) sum -= vals[i-n];
+        if(i>=n-1) out[i] = sum/n;
+      }
+      return out;
+    }
+
+    function rsiWilder(closes, n=14){
+      const out = Array(closes.length).fill(null);
+      let gain=0, loss=0;
+      for(let i=1;i<=n;i++){
+        const ch = closes[i]-closes[i-1];
+        if(ch>=0) gain += ch; else loss -= ch;
+      }
+      gain /= n; loss /= n;
+      out[n] = loss===0 ? 100 : 100 - (100/(1 + (gain/loss)));
+      for(let i=n+1;i<closes.length;i++){
+        const ch = closes[i]-closes[i-1];
+        const g = ch>0 ? ch : 0;
+        const l = ch<0 ? -ch : 0;
+        gain = (gain*(n-1) + g)/n;
+        loss = (loss*(n-1) + l)/n;
+        const rs = loss===0 ? Infinity : gain/loss;
+        out[i] = loss===0 ? 100 : 100 - (100/(1+rs));
+      }
+      return out;
+    }
+
+    function atrWilder(rows, n=14){
+      const out = Array(rows.length).fill(null);
+      const tr = Array(rows.length).fill(null);
+      for(let i=1;i<rows.length;i++){
+        const h = rows[i].high, l=rows[i].low, pc=rows[i-1].close;
+        tr[i] = Math.max(h-l, Math.abs(h-pc), Math.abs(l-pc));
+      }
+      let sum=0;
+      for(let i=1;i<=n;i++) sum += tr[i];
+      let atr = sum/n;
+      out[n] = atr;
+      for(let i=n+1;i<rows.length;i++){
+        atr = (atr*(n-1) + tr[i]) / n;
+        out[i] = atr;
+      }
+      return out;
+    }
+
+    function realizedVol(closes, n=20){
+      const out = Array(closes.length).fill(null);
+      const rets = Array(closes.length).fill(null);
+      for(let i=1;i<closes.length;i++) rets[i] = Math.log(closes[i]/closes[i-1]);
+      for(let i=n;i<closes.length;i++){
+        const window = rets.slice(i-n+1, i+1).filter(v=>v!=null);
+        const m = window.reduce((a,b)=>a+b,0)/window.length;
+        const v = window.reduce((a,b)=>a+(b-m)*(b-m),0)/(window.length-1 || 1);
+        out[i] = Math.sqrt(v) * Math.sqrt(252);
+      }
+      return out;
+    }
+
+    function percentile(values, p){
+      const arr = values.filter(v=>v!=null && Number.isFinite(v)).slice().sort((a,b)=>a-b);
+      if(arr.length===0) return null;
+      const idx = (arr.length-1)*p;
+      const lo = Math.floor(idx), hi = Math.ceil(idx);
+      if(lo===hi) return arr[lo];
+      const w = idx-lo;
+      return arr[lo]*(1-w) + arr[hi]*w;
+    }
+
+    /*********************
+     * Regime + Strategy selection
+     *********************/
+    function classifyRegime(last, sma50, sma200, vol20, volP20, volP80){
+      const above200 = last.close > sma200;
+      const above50 = last.close > sma50;
+      const lowVol = vol20 != null && volP20 != null && vol20 <= volP20;
+      const highVol = vol20 != null && volP80 != null && vol20 >= volP80;
+
+      if(highVol && !above200) return {key:'CRISIS', label:'CRISIS / MEAN-REV', pill:'bad'};
+      if(above200 && lowVol) return {key:'QUIET_TREND', label:'QUIET UPTREND', pill:'good'};
+      if(above200 && above50) return {key:'TREND', label:'TREND / DIP BUY', pill:'good'};
+      return {key:'CHOP', label:'CHOP / WAIT', pill:'warn'};
+    }
+
+    function recommendStrategy(regime, last, inds){
+      const {sma20, sma50, sma200, rsi14, atr14, vol20} = inds;
+
+      if(regime.key==='QUIET_TREND' || regime.key==='TREND'){
+        return {
+          name: 'Strategy 1 • Buy-the-Dip Swing (1–4w)',
+          pill: 'good',
+          desc: `Regime favors continuation. Focus on pullbacks into SMA20–SMA50 support with RSI in the 35–55 band. Use ATR-based stop and time/momentum exit.`
+        };
+      }
+      if(regime.key==='CRISIS'){
+        return {
+          name: 'Strategy • Crisis Accumulation (3–12m)',
+          pill: 'warn',
+          desc: `High vol + below SMA200. Prefer staged entries after stabilization (e.g., close above SMA20) and exit on regime repair (close above SMA200).`
+        };
+      }
+      return {
+        name: 'Strategy • Stand Aside / Range Tactics',
+        pill: 'warn',
+        desc: `Signals are mixed. Avoid forcing trades. Wait for either trend confirmation (close > SMA200) or capitulation (RSI < 30 with reversal).`
+      };
+    }
+
+    /*********************
+     * Trade tickets (precise)
+     *********************/
+    function buildTickets(rows, inds){
+      const n = rows.length;
+      const lastIdx = n-1;
+      const last = rows[lastIdx];
+
+      const sma20 = inds.sma20[lastIdx];
+      const sma50 = inds.sma50[lastIdx];
+      const sma200 = inds.sma200[lastIdx];
+      const rsi14 = inds.rsi14[lastIdx];
+      const atr14 = inds.atr14[lastIdx];
+      const vol20 = inds.vol20[lastIdx];
+
+      const tickets = [];
+
+      // Ticket 1: SMA50 reclaim dip-buy
+      tickets.push({
+        title: 'T1 • SMA50 Dip Reclaim (Swing)',
+        type: 'LONG',
+        setup: `Trigger: Close ≥ SMA50 and intraday Low ≤ SMA50×1.005; RSI 35–55; optional Close>Open confirmation.`,
+        entry: `Entry: Next session OPEN after trigger.`,
+        stop: `Stop: Entry − 2×ATR14 (≈ ${fmt(2*atr14,2)}).`,
+        exit: `Exit: 21 trading days OR RSI>65 (next OPEN).`,
+        levels: {
+          sma50, sma20, atr2: 2*atr14,
+        }
+      });
+
+      // Ticket 2: SMA200 shakeout reclaim
+      tickets.push({
+        title: 'T2 • SMA200 Shakeout Reclaim (Defensive Swing)',
+        type: 'LONG',
+        setup: `Trigger: Close > SMA200 AND within prior 3 sessions traded below SMA200; RSI 30–50.`,
+        entry: `Entry: Next session OPEN after trigger.`,
+        stop: `Stop: Entry − 2×ATR14 (≈ ${fmt(2*atr14,2)}).`,
+        exit: `Exit: 21 trading days OR Close<SMA200 (next OPEN).`,
+        levels: {sma200, atr2: 2*atr14}
+      });
+
+      // Ticket 3: 90D breakout
+      const last90 = rows.slice(Math.max(0,n-90));
+      const hi90 = Math.max(...last90.map(r=>r.high));
+      const volAvg20 = avg(last90.slice(-20).map(r=>r.volume).filter(v=>Number.isFinite(v)));
+
+      tickets.push({
+        title: 'T3 • 90D Breakout Continuation',
+        type: 'LONG',
+        setup: `Trigger: Close > 90D High (${fmt(hi90,2)}) AND Volume ≥ 20D avg volume.`,
+        entry: `Entry: Next session OPEN after trigger.`,
+        stop: `Stop: Entry − 2×ATR14 (≈ ${fmt(2*atr14,2)}).`,
+        exit: `Exit: Trail stop 2×ATR behind highest close OR time-exit 21 days.`,
+        levels: {hi90, volAvg20, atr2: 2*atr14}
+      });
+
+      return tickets;
+    }
+
+    function renderTickets(tickets){
+      const el = $('tickets');
+      el.innerHTML = '';
+      $('ticketCount').textContent = String(tickets.length);
+
+      for(const t of tickets){
+        const pill = t.type==='LONG' ? 'good' : 'warn';
+        const card = document.createElement('div');
+        card.className = 'callout';
+        card.style.marginBottom = '10px';
+        card.innerHTML = `
+          <div class="big">
+            <span class="mono">${escapeHtml(t.title)}</span>
+            <span class="pill ${pill}">${escapeHtml(t.type)}</span>
+          </div>
+          <div class="desc">
+            <div><span class="muted">Setup:</span> ${escapeHtml(t.setup)}</div>
+            <div style="margin-top:8px"><span class="muted">Entry:</span> ${escapeHtml(t.entry)}</div>
+            <div style="margin-top:8px"><span class="muted">Stop:</span> ${escapeHtml(t.stop)}</div>
+            <div style="margin-top:8px"><span class="muted">Exit:</span> ${escapeHtml(t.exit)}</div>
+          </div>
+        `;
+        el.appendChild(card);
+      }
+    }
+
+    /*********************
+     * Strategy 1 Simulation (last 90D)
+     *********************/
+    function simulateStrategy1(rows, inds){
+      const n = rows.length;
+      const start = Math.max(0, n-90);
+
+      const closes = rows.map(r=>r.close);
+      const sma20 = inds.sma20;
+      const sma50 = inds.sma50;
+      const rsi14 = inds.rsi14;
+      const atr14 = inds.atr14;
+
+      const trades = [];
+      let inPos = false;
+      let entryIdx = null;
+      let entryPx = null;
+      let stopPx = null;
+      let exitPlannedIdx = null;
+
+      for(let i=start; i<n-1; i++){
+        // if in position, check stop and exit rules
+        if(inPos){
+          const r = rows[i+1]; // next day for execution
+
+          // Stop check using OHLC of day i+1 (approx: if low <= stop, assume stop fill at stop)
+          if(rows[i+1].low <= stopPx){
+            const exitIdx = i+1;
+            const exitPx = stopPx;
+            trades.push({
+              entryIdx, exitIdx, entryPx, exitPx,
+              reason: 'STOP (2×ATR)',
+              rtn: (exitPx/entryPx)-1
+            });
+            inPos=false; entryIdx=null; entryPx=null; stopPx=null; exitPlannedIdx=null;
+            continue;
+          }
+
+          // RSI>65 exit (signal on close i, execute next open i+1) — we evaluate on day i close
+          if(rsi14[i] != null && rsi14[i] > 65){
+            const exitIdx = i+1;
+            const exitPx = rows[i+1].open;
+            trades.push({entryIdx, exitIdx, entryPx, exitPx, reason:'RSI>65', rtn:(exitPx/entryPx)-1});
+            inPos=false; entryIdx=null; entryPx=null; stopPx=null; exitPlannedIdx=null;
+            continue;
+          }
+
+          // Time exit: 21 trading days after entry (execute next open)
+          if(exitPlannedIdx != null && i+1 >= exitPlannedIdx){
+            const exitIdx = i+1;
+            const exitPx = rows[i+1].open;
+            trades.push({entryIdx, exitIdx, entryPx, exitPx, reason:'TIME (21d)', rtn:(exitPx/entryPx)-1});
+            inPos=false; entryIdx=null; entryPx=null; stopPx=null; exitPlannedIdx=null;
+            continue;
+          }
+
+          continue;
+        }
+
+        // Not in position: evaluate Strategy 1 signal at close of day i
+        const r = rows[i];
+        const s20 = sma20[i];
+        const s50 = sma50[i];
+        const rs = rsi14[i];
+        const atr = atr14[i];
+        if(s20==null || s50==null || rs==null || atr==null) continue;
+
+        // Buy-the-dip Swing conditions (faithful + practical):
+        // - touch SMA20 or near SMA50
+        // - close holds SMA50
+        // - RSI in pullback band 35-55
+        // - bullish close confirmation
+        const touched = (r.low <= s20) || (r.low <= s50*1.005);
+        const holdsTrend = r.close >= s50;
+        const rsOk = (rs >= 35 && rs <= 55);
+        const bullClose = r.close > r.open;
+
+        if(touched && holdsTrend && rsOk && bullClose){
+          // Enter next day open
+          const j = i+1;
+          if(j>=n) break;
+          entryIdx = j;
+          entryPx = rows[j].open;
+          stopPx = entryPx - 2*atr; // ATR from signal day
+          exitPlannedIdx = Math.min(n-1, entryIdx + 21);
+          inPos = true;
+        }
+      }
+
+      return trades;
+    }
+
+    function renderSim(trades, rows){
+      const body = $('simBody');
+      body.innerHTML = '';
+
+      if(trades.length===0){
+        body.innerHTML = `<tr><td colspan="6" class="muted">No trades triggered in the last 90 trading days under the current Strategy 1 rules.</td></tr>`;
+        $('simSummary').textContent = 'No trades fired (last 90d) under current rule-set.';
+        return;
+      }
+
+      let total = 1;
+      let wins = 0;
+      for(const t of trades){
+        total *= (1+t.rtn);
+        if(t.rtn>0) wins++;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${fmtDate(rows[t.entryIdx].date)}</td>
+          <td>${fmtDate(rows[t.exitIdx].date)}</td>
+          <td>${fmt(t.entryPx,2)}</td>
+          <td>${fmt(t.exitPx,2)}</td>
+          <td><span class="${t.rtn>=0?'good':'bad'}">${pct(t.rtn,2)}</span></td>
+          <td>${escapeHtml(t.reason)}</td>
+        `;
+        body.appendChild(tr);
+      }
+
+      const comp = total-1;
+      const winRate = wins / trades.length;
+      $('simSummary').innerHTML = `
+        <div class="mono"><span class="muted">Trades:</span> ${trades.length}  •  <span class="muted">Win rate:</span> ${(winRate*100).toFixed(1)}%  •  <span class="muted">Compounded return:</span> <span class="${comp>=0?'good':'bad'}">${pct(comp,2)}</span></div>
+        <div class="tiny muted" style="margin-top:6px">Rules: touch SMA20 or ≤SMA50×1.005, close≥SMA50, RSI 35–55, bullish close; entry next open; stop = entry−2×ATR(signal day); exit 21d or RSI>65.</div>
+      `;
+    }
+
+    /*********************
+     * Diagnostics
+     *********************/
+    function renderDiagnostics(rows, inds){
+      const i = rows.length-1;
+      const last = rows[i];
+      const prev = rows[i-1];
+      const sma20 = inds.sma20[i];
+      const sma50 = inds.sma50[i];
+      const sma200 = inds.sma200[i];
+      const rsi = inds.rsi14[i];
+      const atr = inds.atr14[i];
+      const vol = inds.vol20[i];
+
+      const dd90 = computeDrawdown(rows.slice(-90));
+      const up = last.close >= sma200;
+      const trend = (inds.sma50[i]-inds.sma50[i-10]) / (inds.sma50[i-10]||1);
+
+      const diag = [
+        {k:'Trend vs SMA200', v: up ? 'Above' : 'Below', s: up ? 'BULL' : 'BEAR', cls: up ? 'good':'bad'},
+        {k:'SMA50 slope (10d)', v: pct(trend,2), s: trend>0 ? 'UP' : 'DOWN', cls: trend>0?'good':'warn'},
+        {k:'RSI14', v: fmt(rsi,1), s: rsi>65?'HOT':(rsi<35?'WEAK':'NEUT'), cls: rsi>65?'warn':(rsi<35?'bad':'good')},
+        {k:'ATR14', v: fmt(atr,2), s: 'RISK', cls: 'warn'},
+        {k:'Vol20 (ann.)', v: vol==null?'—':pct(vol,2), s: vol!=null && vol<0.20?'LOW':(vol!=null&&vol>0.35?'HIGH':'MID'), cls: vol!=null && vol<0.20?'good':(vol!=null&&vol>0.35?'bad':'warn')},
+        {k:'90D Range', v: `${fmt(dd90.low,2)}–${fmt(dd90.high,2)}`, s: `DD ${pct(dd90.dd,2)}`, cls: dd90.dd< -0.12?'warn':'good'}
+      ];
+
+      const body = $('diagBody');
+      body.innerHTML='';
+      for(const d of diag){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(d.k)}</td>
+          <td>${escapeHtml(d.v)}</td>
+          <td><span class="pill ${d.cls}">${escapeHtml(d.s)}</span></td>
+        `;
+        body.appendChild(tr);
+      }
+    }
+
+    function computeDrawdown(rows){
+      let high=-Infinity, low=Infinity;
+      for(const r of rows){
+        if(r.high>high) high=r.high;
+        if(r.low<low) low=r.low;
+      }
+      // Drawdown from 90D high to last close
+      const last = rows[rows.length-1].close;
+      const dd = (last/high)-1;
+      return {high, low, dd};
+    }
+
+    /*********************
+     * Main run
+     *********************/
+    async function run(){
+      $('runBtn').disabled = true;
+      $('runIcon').innerHTML = '<span class="spinner"></span>';
+
+      try{
+        const ticker = $('ticker').value.trim();
+        const provider = $('provider').value;
+        let rows;
+
+        if(provider==='stooq'){
+          rows = await fetchStooqDaily(ticker);
+        } else if(provider==='alpaca'){
+          throw new Error('Alpaca requires a server-side proxy for CORS in most browsers. Use Stooq or Paste CSV.');
+        } else if(provider==='polygon'){
+          throw new Error('Polygon requires a server-side proxy for CORS in most browsers. Use Stooq or Paste CSV.');
+        }
+
+        analyze(rows, ticker, provider);
+
+      } catch(e){
+        toast('DATA ERROR', String(e.message || e));
+      } finally {
+        $('runBtn').disabled = false;
+        $('runIcon').textContent = '▶';
+      }
+    }
+
+    function analyze(rows, ticker, provider){
+      const closes = rows.map(r=>r.close);
+      const sma20 = sma(closes, 20);
+      const sma50 = sma(closes, 50);
+      const sma200 = sma(closes, 200);
+      const rsi14 = rsiWilder(closes, 14);
+      const atr14 = atrWilder(rows, 14);
+      const vol20 = realizedVol(closes, 20);
+      const volP20 = percentile(vol20, 0.20);
+      const volP80 = percentile(vol20, 0.80);
+
+      const i = rows.length-1;
+      const last = rows[i];
+      const prev = rows[i-1];
+
+      const inds = {
+        sma20, sma50, sma200,
+        rsi14, atr14, vol20,
+        volP20, volP80
+      };
+
+      // KPIs
+      $('asOf').textContent = `AS OF ${fmtDate(last.date)} • ${provider.toUpperCase()}`;
+      $('k_last').textContent = fmt(last.close,2);
+      const chg = (last.close/prev.close)-1;
+      $('k_chg').innerHTML = `<span class="${chg>=0?'good':'bad'}">${pct(chg,2)}</span> <span class="muted">(d/d)</span>`;
+
+      $('k_sma').textContent = `${fmt(sma20[i],2)} / ${fmt(sma50[i],2)}`;
+      const smaNote = last.close > sma50[i] ? 'Above SMA50' : 'Below SMA50';
+      $('k_smaNote').textContent = smaNote;
+
+      $('k_sma200').textContent = fmt(sma200[i],2);
+      const trend = last.close > sma200[i] ? 'Above SMA200' : 'Below SMA200';
+      $('k_trend').textContent = trend;
+
+      $('k_vol').textContent = `${fmt(atr14[i],2)} / ${vol20[i]==null?'—':pct(vol20[i],2)}`;
+      $('k_rsi').textContent = `RSI14 ${fmt(rsi14[i],1)}`;
+
+      // Regime + recommendation
+      const regime = classifyRegime(last, sma50[i], sma200[i], vol20[i], volP20, volP80);
+      $('regimeBadge').textContent = regime.label;
+      $('regimeBadge').className = 'badge';
+      $('regimeBadge').style.borderColor = regime.pill==='good' ? 'rgba(46,229,157,.35)' : (regime.pill==='bad' ? 'rgba(255,92,122,.35)' : 'rgba(255,209,102,.35)');
+
+      const rec = recommendStrategy(regime, last, {sma20:sma20[i], sma50:sma50[i], sma200:sma200[i], rsi14:rsi14[i], atr14:atr14[i], vol20:vol20[i]});
+      $('recTitle').textContent = rec.name;
+      $('recPill').textContent = rec.pill==='good' ? 'GO' : (rec.pill==='bad' ? 'RISK' : 'WAIT');
+      $('recPill').className = `pill ${rec.pill==='good'?'good':(rec.pill==='bad'?'bad':'warn')}`;
+      $('recDesc').textContent = rec.desc;
+
+      // Chart (last 90 days)
+      const last90 = rows.slice(-90);
+      const sma20_90 = sma20.slice(-90);
+      const sma50_90 = sma50.slice(-90);
+      drawPriceChart(last90, sma20_90, sma50_90);
+
+      // Diagnostics
+      renderDiagnostics(rows, inds);
+
+      // Tickets
+      const tickets = buildTickets(rows, {
+        sma20, sma50, sma200, rsi14, atr14, vol20
+      });
+      renderTickets(tickets);
+
+      // Simulation
+      const trades = simulateStrategy1(rows, {
+        sma20, sma50, rsi14, atr14
+      });
+      renderSim(trades, rows);
+    }
+
+    /*********************
+     * CSV Paste flow
+     *********************/
+    $('demoBtn').addEventListener('click', ()=>{
+      const text = prompt('Paste OHLC CSV with headers: Date,Open,High,Low,Close,Volume (Volume optional).\n\nNo simulated data: if parsing fails, the app will not proceed.');
+      if(!text) return;
+      try{
+        const rows = parseCSV(text);
+        analyze(rows, $('ticker').value.trim() || 'PASTED', 'pasted_csv');
+      } catch(e){
+        toast('CSV ERROR', String(e.message || e));
+      }
+    });
+
+    $('provider').addEventListener('change', ()=>{
+      const p = $('provider').value;
+      $('apiKeyWrap').classList.toggle('hidden', p==='stooq');
+    });
+    $('provider').dispatchEvent(new Event('change'));
+
+    $('runBtn').addEventListener('click', run);
+
+    // auto-run once on load
+    setTimeout(()=>run(), 250);
+
+    /*********************
+     * Helpers
+     *********************/
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, c=>({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+      }[c]));
+    }
+    function fmtDate(d){
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const dd = String(d.getDate()).padStart(2,'0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    function avg(arr){
+      if(!arr || arr.length===0) return null;
+      const xs = arr.filter(v=>v!=null && Number.isFinite(v));
+      if(xs.length===0) return null;
+      return xs.reduce((a,b)=>a+b,0)/xs.length;
+    }
+  </script>
+</body>
+</html>
